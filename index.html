@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Kalkulačka cestovného</title>
+
+<style>
+body{
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    max-width:700px;
+    margin:auto;
+    padding:20px;
+    background:#f5f5f5;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    margin-bottom:15px;
+    border-radius:12px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:10px;
+    font-size:18px;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    background:#007AFF;
+    color:white;
+    margin-top:10px;
+}
+
+button:active{
+    opacity:0.8;
+}
+
+.result{
+    font-size:18px;
+    line-height:1.8;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Kalkulačka cestovného</h1>
+
+<div class="card">
+
+<label>Sazba Kč/km</label>
+<input id="rate" type="number" value="5">
+
+<label>Způsob zadání</label>
+
+<select id="mode">
+<option value="oneway">Jedním směrem</option>
+<option value="total">Celkem</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<label>R</label>
+<input id="R" type="number">
+
+<label>2R</label>
+<input id="2R" type="number">
+
+<label>3R</label>
+<input id="3R" type="number">
+
+<label>DFA</label>
+<input id="DFA" type="number">
+
+<label>TD</label>
+<input id="TD" type="number">
+
+<button onclick="calculate()">Spočítat</button>
+
+</div>
+
+<div class="card">
+<h2>Výsledek</h2>
+<div id="result" class="result">
+Zadejte údaje.
+</div>
+</div>
+
+<script>
+
+function calculate(){
+
+const rate = Number(document.getElementById("rate").value);
+
+const mode = document.getElementById("mode").value;
+
+const roles = [
+"R",
+"2R",
+"3R",
+"DFA",
+"TD"
+];
+
+let participants = [];
+
+roles.forEach(role => {
+
+const value =
+Number(document.getElementById(role).value);
+
+if(value > 0){
+
+let km = value;
+
+if(mode === "oneway"){
+km *= 2;
+}
+
+const cost = km * rate;
+
+participants.push({
+role,
+cost
+});
+
+}
+
+});
+
+if(participants.length < 2){
+
+document.getElementById("result").innerHTML =
+"Musí být zadány alespoň 2 osoby.";
+
+return;
+
+}
+
+const total =
+participants.reduce((s,p)=>s+p.cost,0);
+
+const share =
+total / participants.length;
+
+let payers = [];
+let receivers = [];
+
+participants.forEach(p=>{
+
+const diff = p.cost - share;
+
+if(diff > 0.01){
+
+receivers.push({
+role:p.role,
+amount:diff
+});
+
+}else if(diff < -0.01){
+
+payers.push({
+role:p.role,
+amount:Math.abs(diff)
+});
+
+}
+
+});
+
+let output = [];
+
+let p=0;
+let r=0;
+
+while(
+p<payers.length &&
+r<receivers.length
+){
+
+let amount = Math.min(
+payers[p].amount,
+receivers[r].amount
+);
+
+output.push(
+`${payers[p].role} → ${receivers[r].role}: ${Math.round(amount)} Kč`
+);
+
+payers[p].amount -= amount;
+receivers[r].amount -= amount;
+
+if(payers[p].amount < 0.01) p++;
+if(receivers[r].amount < 0.01) r++;
+
+}
+
+if(output.length===0){
+
+output.push("Není potřeba žádné vyrovnání.");
+
+}
+
+document.getElementById("result").innerHTML =
+
+`<strong>Počet osob:</strong> ${participants.length}<br>
+<strong>Celkové cestovné:</strong> ${Math.round(total)} Kč<br>
+<strong>Podíl na osobu:</strong> ${share.toFixed(2)} Kč<br><br>
+${output.join("<br>")}`;
+
+}
+
+</script>
+
+</body>
+</html>
